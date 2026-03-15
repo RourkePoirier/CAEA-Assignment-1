@@ -77,16 +77,6 @@ KM = K; % Copy stiffness matrix to new variable
 
 %%%%% OUTPUT %%%%%
 
-% Write outputs to Excel files
-dlmwrite('displacement.xls', U, '')
-dlmwrite('stress_x.xls', Sx, '')
-dlmwrite('stress_y.xls', Sy, '')
-dlmwrite('stress_xy.xls', Sxy, '')
-
-% Call Display function
-display_structure(n_element, ncon, X, Y, U);
-
-% End Program
-
+% W
    
 
