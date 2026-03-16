@@ -86,17 +86,60 @@ dlmwrite('stress_xy.xls', Sxy, '')
 % Call Display function
 display_structure(n_element, ncon, X, Y, U);
 
-% End Main Routine
-
 %%%%% FUNCTION DEFINITIONS %%%%%
 
-function [KE] = pre_processing(l, ncon, X, Y, E, A, t, v)
+function [KE] = pre_processing(i, ncon, X, Y, E, A, t, v)
+
+    % Calcluate [B] (Strain-Displacement) & [D] (Strain-Stress) Matrices
+    B, D = calulate_B_D_matrix(i, ncon, X, Y, E, A, v);
+
+    % Calculate KE (Elemental Stiffness Matrix):
+    % t = element thickness
+    % A = Area of Element
+    % B = Strain-Displacement Matrix
+    % D = Strain-Stress Matrix
+    KE = t*A*(B.')*D*B;
+
+end
+
+function [U, Sx, Sy, Sxy] = post_processing(n_element, KM, NDU, dzero, F, ncon, X, Y, E, A, v)
     
-    global KE;
-    
-    n1 = ncon(l,1);
-    n2 = ncon(l,2);
-    n3 = ncon(l,3);
+    for k = 1:NDU
+        n = dzero(k);
+        KM(:,n) = 0;
+    end
+
+    for k = 1:NDU
+        n = dzero(k);
+        KM(:,n) = 0;
+    end
+
+    for k = 1:NDU
+        n = dzero(k);
+        KM(n,n) = KM(n,n) + 1;
+    end
+
+    U = inv(KM)*F;
+
+    for i = 1:n_element
+
+    end
+
+end
+
+% Calcluate [B] (Strain-Displacement) & [D] (Strain-Stress) Matrices
+% i = iterator
+% ncon = nodal connectivity matrix
+% X = x-coord
+% Y = y-coord
+% E = Young's Modulus (Of the material)
+% A = Area of Element
+% v = Poisson's Ratio (lateral deformation coupling)
+function[B, D] = calulate_B_D_matrix(i, ncon, X, Y, E, A, v)
+
+    n1 = ncon(i,1);
+    n2 = ncon(i,2);
+    n3 = ncon(i,3);
     
     x1 = X(n1);
     x2 = X(n2);
@@ -131,12 +174,4 @@ function [KE] = pre_processing(l, ncon, X, Y, E, A, t, v)
         0 0 (1-v)/2
 
         ];
-
-    % Calculate KE
-    KE = t*A*(B.')*D*B;
-
-end
-
-function [U, Sx, Sy, Sxy] = post_processing(n_element, KM, NDU, dzero, F, ncon, X, Y, E, A, v)
-    
 end
