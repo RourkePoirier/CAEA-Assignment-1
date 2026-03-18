@@ -78,20 +78,20 @@ KM = K; % Copy stiffness matrix to new variable
 %%%%% OUTPUT %%%%%
 
 % Write outputs to Excel files
-dlmwrite('displacement.xls', U, '')
-dlmwrite('stress_x.xls', Sx, '')
-dlmwrite('stress_y.xls', Sy, '')
-dlmwrite('stress_xy.xls', Sxy, '')
+writematrix(U,   'displacement.xlsx')
+writematrix(Sx,  'stress_x.xlsx'    )
+writematrix(Sy,  'stress_y.xlsx'    )
+writematrix(Sxy, 'stress_xy.xlsx'   )
 
 % Call Display function
-display_structure(n_element, ncon, X, Y, U);
+% display_structure(n_element, ncon, X, Y, U);
 
 %%%%% FUNCTION DEFINITIONS %%%%%
 
 function [KE] = pre_processing(i, ncon, X, Y, E, A, t, v)
 
     % Calcluate [B] (Strain-Displacement) & [D] (Strain-Stress) Matrices
-    B, D = calulate_B_D_matrix(i, ncon, X, Y, E, A, v);
+    [B, D, A] = calulate_B_D_matrix(i, ncon, X, Y, E, v);
 
     % Calculate KE (Elemental Stiffness Matrix):
     % t = element thickness
@@ -106,7 +106,7 @@ function [U, Sx, Sy, Sxy] = post_processing(n_element, KM, NDU, dzero, F, ncon, 
     
     for k = 1:NDU
         n = dzero(k);
-        KM(:,n) = 0;
+        KM(n,:) = 0;
     end
 
     for k = 1:NDU
@@ -119,15 +119,17 @@ function [U, Sx, Sy, Sxy] = post_processing(n_element, KM, NDU, dzero, F, ncon, 
         KM(n,n) = KM(n,n) + 1;
     end
 
-    U = inv(KM)*F;
+    U = inv(KM) * F;
 
-    for i = 1:n_element
-
-    end
+    % Return empty for now TODO: Implement Sx, Sy, Sxy (Sigma)
+    Sx = zeros(n_element,1);
+    Sy = zeros(n_element,1);
+    Sxy = zeros(n_element,1);
 
 end
 
-% Calcluate [B] (Strain-Displacement) & [D] (Strain-Stress) Matrices
+% Calcluate [B] (Strain-Displacement), [D] (Strain-Stress) Matrices, 
+% & [A] Area of Triangular Element
 % i = iterator
 % ncon = nodal connectivity matrix
 % X = x-coord
@@ -135,7 +137,7 @@ end
 % E = Young's Modulus (Of the material)
 % A = Area of Element
 % v = Poisson's Ratio (lateral deformation coupling)
-function[B, D] = calulate_B_D_matrix(i, ncon, X, Y, E, A, v)
+function[B, D, A] = calulate_B_D_matrix(i, ncon, X, Y, E, v)
 
     n1 = ncon(i,1);
     n2 = ncon(i,2);
@@ -156,6 +158,9 @@ function[B, D] = calulate_B_D_matrix(i, ncon, X, Y, E, A, v)
     c1 = (x3-x2);
     c2 = (x1-x3);
     c3 = (x2-x1);
+    
+    % Calculate Area of Triangular Element
+    A = 0.5 * det([1 x1 y1; 1 x2 y2; 1 x3 y3]);
 
     % Construct B Matrix
     B = (1/(2*A))*[
