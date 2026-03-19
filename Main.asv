@@ -16,6 +16,8 @@
 % 2D Finite Element Analysis to solve for displacement, stress_x, stress_y,
 % and stress_xy
 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SETUP ROUTINE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -82,13 +84,10 @@ for i = 1:n_element
 end
 
 % Apply Boundary conditions
-KM = apply_boundary_conditions(K, dzero, NDU);
 
 % Solve Global Displacements, U
-U = KM \ F;
 
-% Solve Global stresses
-[Sx, Sy, Sxy] = calculate_element_stresses(n_element, ncon, X, Y, U, E, v);
+% Solve Global 
 
 % Write outputs to Excel files
 writematrix(U,   'displacement.xlsx')
