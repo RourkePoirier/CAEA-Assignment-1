@@ -5,7 +5,7 @@
 #
 
 from typing import List
-from dataclasses import Vertex, Line
+from data_types import Vertex, Line
 
 def generate_mesh_lines(vertices: List[Vertex]) -> List[Line]:
     lines: List[Line] = []

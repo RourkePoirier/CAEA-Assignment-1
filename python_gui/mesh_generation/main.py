@@ -1,7 +1,7 @@
-from gui import MeshGUI
+from gui import GUIManager
 
 def main():
-    gui = MeshGUI()
+    gui = GUIManager()
     gui.run()
 
 if __name__ == "__main__":
