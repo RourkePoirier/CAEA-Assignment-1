@@ -1,10 +1,17 @@
 from dataclasses import dataclass
 from typing import Tuple
+from enum import Enum
+
+class VertexType(Enum):
+    NORMAL = 1
+    FIXED = 2
+    FORCE = 3
 
 @dataclass
 class Vertex:
     x: float
     y: float
+    type: VertexType
 
 @dataclass
 class Line:
