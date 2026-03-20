@@ -10,7 +10,8 @@
 
 # Imports
 import tkinter as tk
-from plot_widget import PlotWidget
+from gui_components.viewport import Viewport
+from gui_components.properties_window import PropertiesWindow
 
 ##########################################################################################
 
@@ -18,7 +19,9 @@ class GUIManager:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Mesh App")
-        self.root.geometry("1000x700")
+        self.root.geometry("1200x800")
+        self.root.attributes("-fullscreen", True)
+        self.root.bind("<Escape>", lambda e: self.root.attributes("-fullscreen", False))
 
         # Store components
         self.components = {}
@@ -27,28 +30,25 @@ class GUIManager:
 
     # ---------- LAYOUT ----------
     def build_layout(self):
-        #Plot widget
-        plot = PlotWidget(self.root, width=600, height=600, scale=1.0)
+        # Viewport
+        plot = Viewport(self.root, width=800, height=600)
         plot.place(x=50, y=50)
         self.components["plot"] = plot
 
-        #Side panel
-        panel = tk.Frame(self.root, width=250, height=600, bg="#f0f0f0")
-        panel.place(x=700, y=50)
+        # Side panel
+        panel = PropertiesWindow(self.root, width=250, height=600)
+        panel.place(x=900, y=50)
         self.components["panel"] = panel
 
-        #Controls inside panel
-
-        tk.Button(panel, text="Clear", command=self.clear_plot).pack(pady=10)
-        tk.Button(panel, text="Print Vertices", command=self.print_vertices).pack(pady=10)
 
     # ---------- BUSINESS LOGIC ----------
     def clear_plot(self):
         self.components["plot"].clear()
 
-    def print_vertices(self):
-        verts = self.components["plot"].get_vertices()
+    def save(self):
+        verts = self.components["plot"].get_nodes()
         print(verts)
-            # ---------- RUN ----------
+
+    # ---------- RUN ----------
     def run(self):
         self.root.mainloop()

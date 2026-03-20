@@ -2,28 +2,28 @@ from dataclasses import dataclass
 from typing import Tuple
 from enum import Enum
 
-class VertexType(Enum):
+class NodeType(Enum):
     NORMAL = 1
     FIXED = 2
     FORCE = 3
 
 @dataclass
-class Vertex:
+class Node:
     x: float
     y: float
-    type: VertexType
+    type: NodeType
 
 @dataclass
 class Line:
-    start: Vertex
-    end: Vertex
+    start: Node
+    end: Node
 
 @dataclass
 class Triangle:
-    verticies: Tuple[Vertex, Vertex, Vertex]
+    verticies: Tuple[Node, Node, Node]
 
 @dataclass
 class ForceVector:
-    vertex: Vertex
+    node: Node
     angle_deg: float
     magnitude: float
