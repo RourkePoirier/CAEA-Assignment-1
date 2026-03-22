@@ -51,17 +51,17 @@ class GUIManager:
 
     def export_excel(self):
         output = self.construct_output()
-        self.write_to_excel(output, filename="data_structure.xlsx")
+        self.write_to_excel(output, filename='data_structure.xlsx')
 
     def construct_output(self):
         ### Get Nodes and material Properties from gui components ###
         nodes = self.components["plot"].get_nodes()
-        elements = self.components["plot"].get_elements()
-        forces = self.components["plot"].get_forces()
+        triangles = self.components["plot"].get_triangles()
+        #forces = self.components["plot"].get_forces()
         material_properties = self.components["properties"].get_material_properties()
 
         # Geometric representation
-        n_element = len(elements)
+        n_element = len(triangles)
         n_nodes = len(nodes)
         ncon1, ncon2, ncon3 = [], [], []  # TODO: fill from elements
         X = [node.x for node in nodes]
@@ -98,7 +98,7 @@ class GUIManager:
 
         return output
 
-    def write_to_excel(output, filename):
+    def write_to_excel(self, output, filename):
 
         data = {
             "n_element": [output.n_element],

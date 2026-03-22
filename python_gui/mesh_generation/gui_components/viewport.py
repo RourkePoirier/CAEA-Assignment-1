@@ -11,7 +11,7 @@
 import math
 import tkinter as tk
 from typing import List
-from data_types import Node, NodeType
+from data_types import Node, NodeType, Triangle
 from gui_components.mesh_generator import generate_triangular_mesh
 
 class Viewport(tk.Frame):
@@ -24,11 +24,12 @@ class Viewport(tk.Frame):
         self.x_offset = width / 2  # center origin
         self.y_offset = height / 2
 
+        # Nodes and Triangles
         self.node_type = NodeType.NORMAL
         self.nodes: List[Node] = []
+        self.triangles: List[Triangle] = []
 
         self._drag_start = None
-
         self.canvas = tk.Canvas(self, width=width, height=height, bg="white")
         self.canvas.pack(fill="both", expand=True)
 
@@ -50,12 +51,13 @@ class Viewport(tk.Frame):
     ############################################################################
     # ---------- TRANSFORMS ----------
     ############################################################################
-
+    
+    # Ensure Y is flipped (y in Tkinter is negative)
     def world_to_screen(self, x, y):
-        return x * self.scale + self.x_offset, y * self.scale + self.y_offset
+        return x * self.scale + self.x_offset, -y * self.scale + self.y_offset
 
     def screen_to_world(self, px, py):
-        return (px - self.x_offset) / self.scale, (py - self.y_offset) / self.scale
+        return (px - self.x_offset) / self.scale, -(py - self.y_offset) / self.scale
 
     def snap(self, px, py):
         x, y = self.screen_to_world(px, py)
@@ -104,9 +106,9 @@ class Viewport(tk.Frame):
 
     def _draw_triangles(self):
 
-        triangles = generate_triangular_mesh(self.nodes)
+        self.triangles = generate_triangular_mesh(self.nodes)
 
-        for tri in triangles:
+        for tri in self.triangles:
             n1, n2, n3 = tri.Nodes
 
             p1 = self.world_to_screen(n1.x, n1.y)
@@ -198,12 +200,19 @@ class Viewport(tk.Frame):
     # ---------- UTILITY FUNCTIONS ----------
     ############################################################################
 
-    # float range
+    # float range function (+ive and -ive)
     def _frange(self, start, stop, step):
+        if step == 0:
+            return
         x = start
-        while x <= stop:
-            yield x
-            x += step
+        if start < stop:
+            while x <= stop:
+                yield x
+                x += step
+        else:
+            while x >= stop:
+                yield x
+                x -= step
 
     def _find_nearest_node(self, px, py):
         x, y = self.screen_to_world(px, py)
@@ -223,6 +232,9 @@ class Viewport(tk.Frame):
     def get_nodes(self):
         return list(self.nodes)
 
+    def get_triangles(self):
+        return list(self.triangles)
+    
     def clear(self):
         self.nodes.clear()
         self._redraw()
