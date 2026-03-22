@@ -5,9 +5,9 @@
 #
 
 from typing import List
-from data_types import Vertex, Line
+from data_types import Node, Line
 
-def generate_triangular_mesh(vertices: List[Vertex]) -> List[Line]:
+def generate_triangular_mesh(nodes: List[Node]) -> List[Line]:
     lines: List[Line] = []
     # triangulation logic goes here
     return lines
