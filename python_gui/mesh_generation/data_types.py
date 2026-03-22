@@ -2,11 +2,18 @@ from dataclasses import dataclass
 from typing import Tuple, List
 from enum import Enum
 
+# Tool is the viewport tool type
+class Tool(Enum):
+    NODE = 1
+    FIXED_NODE = 2
+    FORCE = 3
+
+# Node type roughly matches tool but for future development they are split types
 class NodeType(Enum):
     NORMAL = 1
     FIXED = 2
     FORCE = 3
-
+    
 @dataclass
 class Node:
     x: float
@@ -23,7 +30,7 @@ class Triangle:
     Nodes: Tuple[Node, Node, Node]
 
 @dataclass
-class ForceVector:
+class Force:
     node: Node
     angle_deg: float
     magnitude: float

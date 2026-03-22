@@ -10,9 +10,11 @@
 
 import math
 import tkinter as tk
+import tkinter.simpledialog as sd
 from typing import List
-from data_types import Node, NodeType, Triangle
+from data_types import Node, Tool, NodeType, Triangle, Force
 from gui_components.mesh_generator import generate_triangular_mesh
+from gui_components.force_dialog import ForceDialog
 
 class Viewport(tk.Frame):
 
@@ -25,10 +27,11 @@ class Viewport(tk.Frame):
         self.y_offset = height / 2
 
         # Nodes and Triangles
-        self.node_type = NodeType.NORMAL
-        self.nodes: List[Node] = []
+        self.nodes:     List[Node] = []
         self.triangles: List[Triangle] = []
+        self.forces:    List[Force] = []
 
+        self.tool = Tool.NODE # Default tool is node tool
         self._drag_start = None
         self.canvas = tk.Canvas(self, width=width, height=height, bg="white")
         self.canvas.pack(fill="both", expand=True)
@@ -42,9 +45,9 @@ class Viewport(tk.Frame):
         self.canvas.bind("<Motion>", self._on_mouse_move)
         self.canvas.bind("<Configure>", lambda e: self._redraw())
 
-        self.bind_all("1", lambda e: self._set_type(NodeType.NORMAL))
-        self.bind_all("2", lambda e: self._set_type(NodeType.FIXED))
-        self.bind_all("3", lambda e: self._set_type(NodeType.FORCE))
+        self.bind_all("1", lambda e: self._set_tool(Tool.NODE))
+        self.bind_all("2", lambda e: self._set_tool(Tool.FIXED_NODE))
+        self.bind_all("3", lambda e: self._set_tool(Tool.FORCE))
 
         self._redraw()
     
@@ -102,7 +105,31 @@ class Viewport(tk.Frame):
             elif node.type == NodeType.FIXED:
                 self.canvas.create_oval(px-r, py-r, px+r, py+r, fill="black")
             elif node.type == NodeType.FORCE:
-                self.canvas.create_oval(px-r, py-r, px+r, py+r, outline="red", width=2)
+                self.canvas.create_oval(px-r, py-r, px+r, py+r, outline="red",width=2)
+
+    def _draw_forces(self):
+
+        arrow_scale = 0.2  # scaling factor for visualization
+
+        for f in self.forces:
+            # starting point (node position)
+            x0, y0 = self.world_to_screen(f.node.x, f.node.y)
+
+            # compute vector end point
+            rad = math.radians(f.angle)
+            dx = f.magnitude * math.cos(rad) * arrow_scale
+            dy = f.magnitude * math.sin(rad) * arrow_scale
+
+            # flip dy for screen coordinates
+            x1, y1 = self.world_to_screen(f.node.x + dx, f.node.y + dy)
+
+            # draw arrow
+            self.canvas.create_line(
+                x0, y0, x1, y1,
+                arrow=tk.LAST,
+                fill="blue",
+                width=2
+            )
 
     def _draw_triangles(self):
 
@@ -147,6 +174,7 @@ class Viewport(tk.Frame):
         self.canvas.delete("all")
         self._draw_grid()
         self._draw_triangles() 
+        self._draw_forces()
         self._draw_nodes()
 
     ############################################################################
@@ -154,9 +182,31 @@ class Viewport(tk.Frame):
     ############################################################################
 
     def _on_left_click(self, event):
+
+        # Snap to nearest grid point
         x, y = self.snap(event.x, event.y)
-        if not any(n.x == x and n.y == y for n in self.nodes):
-            self.nodes.append(Node(x, y, self.node_type))
+
+        # if there are no nodes at point
+        if not self._node_exists_at(x, y):
+            
+            # Insert Node based on currently selected Tool
+            match(self.tool):
+
+                case Tool.NODE:
+                    self.nodes.append(Node(x, y, NodeType.NORMAL))
+
+                case Tool.FIXED_NODE:
+                    self.nodes.append(Node(x, y, NodeType.FIXED))
+
+                case Tool.FORCE:
+                    dlg = ForceDialog(self, "Define Force")
+                    if dlg.magnitude is None or dlg.angle is None: return  # user cancelled
+
+                    node = Node(x, y, NodeType.FORCE)
+                    self.nodes.append(node)
+                    self.forces.append(Force(node, magnitude=dlg.magnitude, angle=dlg.angle))
+                                    
+                
             self._redraw()
 
     def _on_double_left_click(self, event):
@@ -193,8 +243,8 @@ class Viewport(tk.Frame):
         self.scale *= factor
         self._redraw()
 
-    def _set_type(self, t):
-        self.node_type = t
+    def _set_tool(self, t):
+        self.tool = t
 
     ############################################################################
     # ---------- UTILITY FUNCTIONS ----------
@@ -224,6 +274,10 @@ class Viewport(tk.Frame):
             if dx*dx + dy*dy <= radius * radius:
                 return node
         return None
+    
+    # Node coord collision test
+    def _node_exists_at(self, x, y) -> bool:
+        return any(n.x == x and n.y == y for n in self.nodes)
     
     ############################################################################
     # ---------- PUBLIC API ----------
