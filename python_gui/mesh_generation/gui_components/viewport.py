@@ -12,6 +12,7 @@ import math
 import tkinter as tk
 from typing import List
 from data_types import Node, NodeType
+from gui_components.mesh_generator import generate_triangular_mesh
 
 class Viewport(tk.Frame):
 
@@ -101,6 +102,22 @@ class Viewport(tk.Frame):
             elif node.type == NodeType.FORCE:
                 self.canvas.create_oval(px-r, py-r, px+r, py+r, outline="red", width=2)
 
+    def _draw_triangles(self):
+
+        triangles = generate_triangular_mesh(self.nodes)
+
+        for tri in triangles:
+            n1, n2, n3 = tri.Nodes
+
+            p1 = self.world_to_screen(n1.x, n1.y)
+            p2 = self.world_to_screen(n2.x, n2.y)
+            p3 = self.world_to_screen(n3.x, n3.y)
+
+            # Draw triangle edges
+            self.canvas.create_line(*p1, *p2, fill="red")
+            self.canvas.create_line(*p2, *p3, fill="red")
+            self.canvas.create_line(*p3, *p1, fill="red")
+
     def _draw_tooltip(self, px, py, node):
         self.canvas.delete("tooltip")
 
@@ -127,6 +144,7 @@ class Viewport(tk.Frame):
     def _redraw(self):
         self.canvas.delete("all")
         self._draw_grid()
+        self._draw_triangles() 
         self._draw_nodes()
 
     ############################################################################
