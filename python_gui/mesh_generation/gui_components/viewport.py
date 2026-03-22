@@ -109,16 +109,14 @@ class Viewport(tk.Frame):
 
     def _draw_forces(self):
 
-        arrow_scale = 0.2  # scaling factor for visualization
-
         for f in self.forces:
             # starting point (node position)
             x0, y0 = self.world_to_screen(f.node.x, f.node.y)
 
-            # compute vector end point
+            # compute vector end point 2x length of grid
             rad = math.radians(f.angle)
-            dx = f.magnitude * math.cos(rad) * arrow_scale
-            dy = f.magnitude * math.sin(rad) * arrow_scale
+            dx = math.cos(rad) * 2
+            dy = math.sin(rad) * 2 
 
             # flip dy for screen coordinates
             x1, y1 = self.world_to_screen(f.node.x + dx, f.node.y + dy)
@@ -127,8 +125,8 @@ class Viewport(tk.Frame):
             self.canvas.create_line(
                 x0, y0, x1, y1,
                 arrow=tk.LAST,
-                fill="blue",
-                width=2
+                fill="red",
+                width=4
             )
 
     def _draw_triangles(self):
@@ -199,6 +197,7 @@ class Viewport(tk.Frame):
                     self.nodes.append(Node(x, y, NodeType.FIXED))
 
                 case Tool.FORCE:
+
                     dlg = ForceDialog(self, "Define Force")
                     if dlg.magnitude is None or dlg.angle is None: return  # user cancelled
 
@@ -212,6 +211,7 @@ class Viewport(tk.Frame):
     def _on_double_left_click(self, event):
         x, y = self.snap(event.x, event.y)
         self.nodes = [n for n in self.nodes if not (n.x == x and n.y == y)]
+        self.forces = [f for f in self.forces if not (f.node.x == x and f.node.y == y)]
         self._redraw()
 
     def _on_mouse_move(self, event):

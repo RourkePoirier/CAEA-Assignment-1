@@ -32,7 +32,7 @@ class Triangle:
 @dataclass
 class Force:
     node: Node
-    angle_deg: float
+    angle: float
     magnitude: float
 
 # data_structure.xlsx structure made by Sarat
