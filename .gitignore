@@ -2,3 +2,8 @@
 **/stress_y.xlsx
 **/stress_xy.xlsx
 **/displacement.xlsx
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
