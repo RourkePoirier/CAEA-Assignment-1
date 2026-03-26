@@ -20,15 +20,17 @@ class PropertiesWindow(tk.Frame):
         #########################################
         # Title
         #########################################
+
         title = tk.Label(self, text="System Properties:", font=("Arial", 10, "bold"))
         title.grid(row=0, column=0, columnspan=3, pady=(0, 10), sticky="w")
 
         #########################################
         # Create key-value-unit rows
         #########################################
+
         for i, (key, unit) in enumerate(entries, start=1):
+
             label = tk.Label(self, text=f"{key}:")
-            
             var = tk.StringVar()
             entry = tk.Entry(self, textvariable=var, width=10)
             unit_label = tk.Label(self, text=f"({unit})" if unit else "")
@@ -41,6 +43,7 @@ class PropertiesWindow(tk.Frame):
             self.vars[key] = var
 
             var.trace_add("write", lambda *args, k=key: self._update_property(k))
+    
 
     #########################################
     # Autosave update
