@@ -13,7 +13,8 @@ import tkinter as tk
 import pandas as pd
 from gui_components.viewport import Viewport
 from gui_components.properties_window import PropertiesWindow
-from data_types import ExcelOutputFormat, NodeType
+from gui_components.mesh_gen_window import MeshGenWindow
+from data_types import ExcelOutputFormat, NodeType, MeshScheme
 
 ##########################################################################################
 
@@ -32,8 +33,12 @@ class GUIManager:
 
     # ---------- LAYOUT ----------
     def build_layout(self):
+
+        mesh_method = tk.StringVar()
+        #mesh_method.trace_add("write", lambda *_: print(mesh_method.get()))
+
         # Viewport
-        plot = Viewport(self.root, width=800, height=600)
+        plot = Viewport(self.root, mesh_method=mesh_method, width=800, height=600)
         plot.place(x=50, y=50)
         self.components["plot"] = plot
 
@@ -42,6 +47,11 @@ class GUIManager:
         properties.place(x=900, y=50)
         self.components["properties"] = properties
 
+        # Side panel
+        mesh_panel = MeshGenWindow(self.root, mesh_method=mesh_method, on_change=plot._redraw, width=250, height=600)
+        mesh_panel.place(x=900, y=175)
+
+        self.components["properties"] = properties
         exp_button = tk.Button(self.root, text="Export to data_structure.xlsx", command=self.export_excel)
         exp_button.place(x=900, y=400)
 

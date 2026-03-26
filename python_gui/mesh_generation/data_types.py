@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Tuple, List
-from enum import Enum
+from enum import Enum, StrEnum
+
+# -- Enums --
 
 # Tool is the viewport tool type
 class Tool(Enum):
@@ -13,7 +15,15 @@ class NodeType(Enum):
     NORMAL = 1
     FIXED = 2
     FORCE = 3
-    
+     
+# Different types of mesh generation schemes
+@dataclass
+class MeshScheme(StrEnum):
+    DELAUNAY = "Delauny" 
+    NOTHING = "Nothing"
+
+# -- Classes --
+
 @dataclass
 class Node:
     x: float
@@ -52,4 +62,3 @@ class ExcelOutputFormat:
     dzero:      List[int]       # Increment for number of Nodes (if n=4 -> 1,2,3,4) Again purposeless, but I don't make the rules :/
     v:          float           # Poission's Ratio
     t:          float           # Uniform thickness of 2D element
-    

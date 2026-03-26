@@ -12,13 +12,13 @@ import math
 import tkinter as tk
 import tkinter.simpledialog as sd
 from typing import List
-from data_types import Node, Tool, NodeType, Triangle, Force
+from data_types import Node, Tool, NodeType, Triangle, Force, MeshScheme 
 from gui_components.mesh_generator import generate_triangular_mesh
 from gui_components.force_dialog import ForceDialog
 
 class Viewport(tk.Frame):
 
-    def __init__(self, parent, width=800, height=600):
+    def __init__(self, parent, mesh_method: tk.StringVar, width=800, height=600):
         super().__init__(parent)
 
         self.scale = 50.0          # pixels per world unit
@@ -30,6 +30,9 @@ class Viewport(tk.Frame):
         self.nodes:     List[Node] = []
         self.triangles: List[Triangle] = []
         self.forces:    List[Force] = []
+
+        # Mesh Generation Scheme
+        self.mesh_scheme = mesh_method
 
         self.tool = Tool.NODE # Default tool is node tool
         self._drag_start = None
@@ -131,7 +134,7 @@ class Viewport(tk.Frame):
 
     def _draw_triangles(self):
 
-        self.triangles = generate_triangular_mesh(self.nodes)
+        self.triangles = generate_triangular_mesh(self.nodes, self.mesh_scheme)
 
         for tri in self.triangles:
             n1, n2, n3 = tri.Nodes
