@@ -31,6 +31,9 @@ def generate_triangular_mesh(nodes: List[Node], mesh_method: tk.StringVar) -> Li
 # -- Algorithms --
 
 def _delaunay(nodes: List[Node]) -> List[Triangle]:
+
+    if len(nodes) < 3: return []
+    
     # Convert to numpy points
     points = np.array([[node.x, node.y] for node in nodes])
 

@@ -12,7 +12,7 @@ import math
 import tkinter as tk
 from typing import List
 from data_types import Node, Tool, NodeType, Triangle, Force, MeshScheme 
-from gui_components.mesh_generator import generate_triangular_mesh
+from gui_components.mesh_generator import _delaunay
 from gui_components.force_dialog import ForceDialog
 
 # Unit definitions
@@ -213,8 +213,8 @@ class Viewport(tk.Frame):
             self.canvas.create_line(x0, y0, x1, y1, arrow=tk.LAST, fill="red", width=2)
             self.canvas.create_text(x1, y1, text=f"{f.magnitude}N", fill="red", font=("Arial", 7), anchor="sw")
 
-    def _draw_triangles(self):
-        self.triangles = generate_triangular_mesh(self.nodes)
+    def _draw_triangles(self): 
+        self.triangles = _delaunay(self.nodes) # BUG - Fix to implement selectable mesh generation scheme
 
         for tri in self.triangles:
             n1, n2, n3 = tri.Nodes
