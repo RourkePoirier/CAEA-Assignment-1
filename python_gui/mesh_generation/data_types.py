@@ -29,6 +29,9 @@ class Node:
     x: float
     y: float
     type: NodeType
+    
+    def __hash__(self):
+        return id(self)
 
 @dataclass
 class Line:
@@ -38,6 +41,7 @@ class Line:
 @dataclass
 class Triangle:
     Nodes: Tuple[Node, Node, Node]
+
 
 @dataclass
 class Force:

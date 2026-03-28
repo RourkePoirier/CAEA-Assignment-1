@@ -102,9 +102,9 @@ class GUIManager:
 
             for tri in triangles:
                 # tri.nodes is assumed to be [node1, node2, node3]
-                ncon1.append(node_index_map[tri.nodes[0]])
-                ncon2.append(node_index_map[tri.nodes[1]])
-                ncon3.append(node_index_map[tri.nodes[2]])
+                ncon1.append(node_index_map[tri.Nodes[0]])
+                ncon2.append(node_index_map[tri.Nodes[1]])
+                ncon3.append(node_index_map[tri.Nodes[2]])
             
             
             
