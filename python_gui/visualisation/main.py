@@ -1,8 +1,9 @@
 
+from gui import GUIManager
 
 def main():
-    print("Hello World")
+    gui = GUIManager()
+    gui.run()
 
-# Run main() as entry point
 if __name__ == "__main__":
     main()
