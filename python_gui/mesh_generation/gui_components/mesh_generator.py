@@ -55,6 +55,7 @@ def _delaunay(nodes: List[Node]) -> List[Triangle]:
     return triangles
 
 def _nothing(nodes: List[Node]) -> List[Triangle]:
+    print("AAAAAAAA")
     return []
 
 # -- Helper Methods --
