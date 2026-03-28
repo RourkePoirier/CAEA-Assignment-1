@@ -14,6 +14,7 @@
 import tkinter as tk
 import pandas as pd
 import math
+from itertools import zip_longest
 
 from gui_components.viewport import Viewport
 from gui_components.properties_window import PropertiesWindow
@@ -72,7 +73,7 @@ class GUIManager:
     def export_excel(self):
         output = self.construct_output()
         self.write_to_excel(output, filename='data_structure.xlsx')
-    
+
     def construct_output(self):
 
         try:
@@ -105,9 +106,9 @@ class GUIManager:
                 ncon1.append(node_index_map[tri.Nodes[0]])
                 ncon2.append(node_index_map[tri.Nodes[1]])
                 ncon3.append(node_index_map[tri.Nodes[2]])
-            
-            
-            
+
+
+
             # For each force, calculate x and y component (to 4dp) and append to output array
             for force in forces:
                 angle_rad = math.radians(force.angle)
@@ -117,7 +118,7 @@ class GUIManager:
                 F.append(force_x)
                 F.append(force_y)
 
-            
+
 
             # Boundary Conditions
             NDU = sum(1 for node in nodes if node.type != NodeType.FIXED)    # NDU is the number of non-fixed nodes
@@ -135,24 +136,24 @@ class GUIManager:
 
             # Assign variables to ExcelOutputFormat
             output = ExcelOutputFormat(
-                n_element=n_element,
-                n_nodes=n_nodes,
-                ncon1=ncon1,
-                ncon2=ncon2,
-                ncon3=ncon3,
-                X=X,
-                Y=Y,
-                E=E,
-                A=0,
-                F=F,
-                NDU=NDU,
-                dzero=dzero,
-                v=v,
-                t=t
-            )
+                    n_element=n_element,
+                    n_nodes=n_nodes,
+                    ncon1=ncon1,
+                    ncon2=ncon2,
+                    ncon3=ncon3,
+                    X=X,
+                    Y=Y,
+                    E=E,
+                    A=0,
+                    F=F,
+                    NDU=NDU,
+                    dzero=dzero,
+                    v=v,
+                    t=t
+                    )
 
             return output
-        
+
         except Exception as e:
             raise e
 
@@ -164,24 +165,33 @@ class GUIManager:
             len(output.Y),
             len(output.ncon1),
             len(output.ncon2),
-            len(output.ncon3)
-        )
+            len(output.ncon3),
+            len(output.dzero),
+            )
 
-        # Pad function
+        # Pad lists to max_len, wrap scalars in a list then pad
         def pad(lst):
+            if not isinstance(lst, list):
+               lst = [lst]  # wrap scalars
             return lst + [None] * (max_len - len(lst))
 
-        # Build DataFrame with padded columns
         df_full = pd.DataFrame({
-            "F": pad(output.F),
-            "X": pad(output.X),
-            "Y": pad(output.Y),
-            "ncon1": pad(output.ncon1),
-            "ncon2": pad(output.ncon2),
-            "ncon3": pad(output.ncon3),
+            "n_element": pad(output.n_element),
+            "n_nodes":   pad(output.n_nodes),
+            "ncon1":     pad(output.ncon1),
+            "ncon2":     pad(output.ncon2),
+            "ncon3":     pad(output.ncon3),
+            "X":         pad(output.X),
+            "Y":         pad(output.Y),
+            "E":         pad(output.E),
+            "A":         pad(output.A),
+            "F":         pad(output.F),
+            "NDU":       pad(output.NDU),
+            "dzero":     pad(output.dzero),
+            "v":         pad(output.v),
+            "t":         pad(output.t),
         })
 
-        # Write to Excel
         df_full.to_excel(filename, index=False)
 
     # ---------- RUN ----------
