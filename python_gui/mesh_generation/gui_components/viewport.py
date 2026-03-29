@@ -216,9 +216,10 @@ class Viewport(tk.Frame):
             self.canvas.create_line(x0, y0, x1, y1, arrow=tk.LAST, fill="red", width=2)
             self.canvas.create_text(x1, y1, text=f"{f.magnitude}N", fill="red", font=("Arial", 7), anchor="sw")
 
-    def _draw_triangles(self): 
+    def _regenerate_mesh(self):
         self.triangles = generate_triangular_mesh(self.nodes, self.mesh_scheme)
 
+    def _draw_triangles(self): 
         for tri in self.triangles:
             n1, n2, n3 = tri.Nodes
             p1 = self.world_to_screen(n1.x, n1.y)
@@ -272,7 +273,8 @@ class Viewport(tk.Frame):
                     node = Node(x, y, NodeType.FORCE)
                     self.nodes.append(node)
                     self.forces.append(Force(node, magnitude=dlg.magnitude,angle=dlg.angle))
-
+            
+            self._regenerate_mesh()
             self._redraw()
 
     # Remove closest node on double click
@@ -280,6 +282,8 @@ class Viewport(tk.Frame):
         x, y = self.snap(event.x, event.y)
         self.nodes  = [n for n in self.nodes  if not (n.x == x and n.y == y)]
         self.forces = [f for f in self.forces if not (f.node.x == x and f.node.y == y)]
+
+        self._regenerate_mesh()
         self._redraw()
 
     # Mouse Hover Behaviour

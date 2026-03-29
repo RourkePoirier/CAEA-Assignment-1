@@ -54,9 +54,9 @@ class Force:
 class ExcelOutputFormat:
     n_element:  int             # Number of Triangular Elements
     n_nodes:    int             # Number of Nodes
-    ncon1:      List[int]       # Nodal Connectivity Matrix Column 1
-    ncon2:      List[int]       # Nodal Connectivity Matrix Column 2
-    ncon3:      List[int]       # Nodal Connectivity Matrix Column 3
+    ncon1:      List[int]       # Nodal Connectivity Matrix 
+    ncon2:      List[int]       # Nodal Connectivity Matrix 
+    ncon3:      List[int]       # Nodal Connectivity Matrix 
     X:          List[float]     # Node X Coords
     Y:          List[float]     # Node Y Coords
     E:          float           # Young's Modulus

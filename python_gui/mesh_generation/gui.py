@@ -20,6 +20,7 @@ from gui_components.viewport import Viewport
 from gui_components.properties_window import PropertiesWindow
 from gui_components.mesh_gen_window import MeshGenWindow
 from data_types import ExcelOutputFormat, NodeType, MeshScheme
+from pre_processing import PreProcessing
 
 ##########################################################################################
 
@@ -57,7 +58,7 @@ class GUIManager:
         mesh_panel.place(x=900, y=175)
 
         self.components["properties"] = properties
-        # Buttons
+# Buttons
         clear_viewport_button = tk.Button(self.root, text="Clear viewport", command=self.clear_viewport)
         exp_button = tk.Button(self.root, text="Export to data_structure.xlsx", command=self.export_excel)
 
@@ -70,9 +71,17 @@ class GUIManager:
     def clear_viewport(self):
         self.components["plot"].clear()
 
+    # TODO: Check if all the proper values are there, E, t and v
     def export_excel(self):
         output = self.construct_output()
-        self.write_to_excel(output, filename='data_structure.xlsx')
+        self.write_data_structure_to_excel(output, filename='data_structure.xlsx')  
+
+        pp = PreProcessing(output)
+
+        self.write_to_excel(pp.get_U(),     'U',    'displacement.xlsx')
+        self.write_to_excel(pp.get_Sx(),    'Sx',   'stress_x.xlsx')
+        self.write_to_excel(pp.get_Sy(),    'Sy',   'stress_y.xlsx')
+        self.write_to_excel(pp.get_Sxy(),   'Sxy',  'stress_xy.xlsx')
 
     def construct_output(self):
 
@@ -94,20 +103,17 @@ class GUIManager:
             ncon1, ncon2, ncon3 = [], [], []    # Populated later
             X = [node.x for node in nodes]
             Y = [node.y for node in nodes] 
-            F = []                              # Populated later
+            F = [0.0] * (2 * n_nodes)                              # Populated later
             A = 0                               # Area is handled in MATLAB -> here for poserity
 
 
             # Map Node objects to 1-based indices
             node_index_map = {node: i+1 for i, node in enumerate(nodes)}
 
-            for tri in triangles:
-                # tri.nodes is assumed to be [node1, node2, node3]
+            for tri in triangles:   
                 ncon1.append(node_index_map[tri.Nodes[0]])
                 ncon2.append(node_index_map[tri.Nodes[1]])
                 ncon3.append(node_index_map[tri.Nodes[2]])
-
-
 
             # For each force, calculate x and y component (to 4dp) and append to output array
             for force in forces:
@@ -115,14 +121,20 @@ class GUIManager:
                 force_x = round(force.magnitude * math.cos(angle_rad), 4)
                 force_y = round(force.magnitude * math.sin(angle_rad), 4)
 
-                F.append(force_x)
-                F.append(force_y)
+                node_idx = node_index_map[force.node] - 1  # 0-based
+                F[2*node_idx]   += force_x
+                F[2*node_idx+1] += force_y
 
-
+            dzero = []
+            for i, node in enumerate(nodes):
+                if node.type == NodeType.FIXED:
+                    dof_x = 2 * (i + 1) - 1  # x DOF (1-based)
+                    dof_y = 2 * (i + 1)       # y DOF (1-based)
+                    dzero.append(dof_x)
+                    dzero.append(dof_y)
 
             # Boundary Conditions
-            NDU = sum(1 for node in nodes if node.type != NodeType.FIXED)    # NDU is the number of non-fixed nodes
-            dzero = list(range(1, len(nodes) + 1))                           # dzero is an indexed list of the n_nodes
+            NDU = len(dzero)    # NDU is the number of non-fixed nodes
 
             # Material Properties if not exist set to zero
             try: E = material_properties["Young's Modulus"] 
@@ -150,31 +162,34 @@ class GUIManager:
                     dzero=dzero,
                     v=v,
                     t=t
-                    )
+                )
 
             return output
 
         except Exception as e:
             raise e
 
-    def write_to_excel(self, output, filename):
-        # Find the longest list
+    def write_to_excel(self, data, header, filename):
+        df_full = pd.DataFrame({
+            header: data,
+        })
+
+        df_full.to_excel(filename, index=False)
+    
+    def write_data_structure_to_excel(self, output, filename):
         max_len = max(
             len(output.F),
             len(output.X),
             len(output.Y),
-            len(output.ncon1),
-            len(output.ncon2),
-            len(output.ncon3),
             len(output.dzero),
-            )
+        )
 
-        # Pad lists to max_len, wrap scalars in a list then pad
         def pad(lst):
             if not isinstance(lst, list):
-               lst = [lst]  # wrap scalars
+                lst = [lst]
             return lst + [None] * (max_len - len(lst))
 
+        # Build full dataframe including ncon
         df_full = pd.DataFrame({
             "n_element": pad(output.n_element),
             "n_nodes":   pad(output.n_nodes),
@@ -190,10 +205,11 @@ class GUIManager:
             "dzero":     pad(output.dzero),
             "v":         pad(output.v),
             "t":         pad(output.t),
-        })
-
+        })    
+        print(df_full.to_string())
         df_full.to_excel(filename, index=False)
 
     # ---------- RUN ----------
     def run(self):
         self.root.mainloop()
+
