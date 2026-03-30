@@ -11,9 +11,10 @@
 import math
 import tkinter as tk
 from typing import List
-from data_types import Node, Tool, NodeType, Triangle, Force, MeshScheme 
-from gui_components.mesh_generator import generate_triangular_mesh
+from data_types import Node, Tool, NodeType, Triangle, Force, MeshScheme
 from gui_components.force_dialog import ForceDialog
+from gui_components.mesh_generator import generate_triangular_mesh
+from gui_components.subdivision import subdivide_triangular_mesh
 
 # Unit definitions
 #   mpu        = metres per unit  (world coords are always in metres internally)
@@ -33,31 +34,35 @@ FORCE_ARROW_PX = 60
 MIN_GRID_PX    = 8
 
 
-class Viewport(tk.Frame):
+class Viewport(tk.Frame): 
 
-    def __init__(self, parent, mesh_method: tk.StringVar, width=800, height=600):
+    def __init__(self, parent, mesh_method: MeshScheme = MeshScheme.DELAUNAY, subdivision_level = 0, width=800, height=600):
+
         super().__init__(parent)
 
+        # Data Parameters
+        self.nodes:             List[Node]     = []
+        self.base_triangles:    List[Triangle] = [] # Base triangle mesh before subdivision
+        self.subd_triangles:    List[Triangle] = [] # Subdivide triangle mesh after subdivision
+        self.forces:            List[Force]    = []
+
+        self.edge_map = {}
+
+        # Mesh Generation and Subdivision
+        self.mesh_scheme = mesh_method
+        self.subdivision_level = subdivision_level
+
+        # Drawing / Viewport parameters
         self._unit_key = DEFAULT_UNIT
         self._unit     = UNITS[DEFAULT_UNIT]
-
         self.grid_step = self._unit["grid_step"]
         self.scale     = self._unit["scale"]
         self.x_offset  = width  / 2
         self.y_offset  = height / 2
         self._init_w   = width
         self._init_h   = height
-
-        # Data
-        self.nodes:     List[Node]     = []
-        self.triangles: List[Triangle] = []
-        self.forces:    List[Force]    = []
-
         self.tool        = Tool.NODE
         self._drag_start = None
-
-        # Mesh Generation Scheme
-        self.mesh_scheme = mesh_method
 
         # ── Toolbar ───────────────────────────────────────────────────────────
         ctrl_bar = tk.Frame(self, bg="#f0f0f0", pady=2)
@@ -115,6 +120,18 @@ class Viewport(tk.Frame):
         self._redraw()
 
     ############################################################################
+    # ---------- MESH GENERATION & SUBDIVISION FUNCTION CALLS ----------
+    ############################################################################
+
+    # Handled Externally -> Returns list of Triangles
+    def _generate_mesh(self):
+        self.base_triangles = generate_triangular_mesh(self.nodes, self.mesh_scheme) 
+
+    # Handled Externally -> Returns list of Triangles
+    def _subdivide(self):
+        self.subd_triangles = subdivide_triangular_mesh(self.nodes, self.subdivision_level)
+
+    ############################################################################
     # ---------- TRANSFORMS ----------
     ############################################################################
 
@@ -167,7 +184,6 @@ class Viewport(tk.Frame):
         self.canvas.create_line(px0, 0,  px0, h,  fill="#404040", width=2)
         self.canvas.create_line(0,  py0,  w,  py0, fill="#404040", width=2)
 
-
     def _draw_grid_lines(self, x_min, x_max, y_min, y_max, step, w, h, colour):
 
         for x in self._frange(math.floor(x_min / step) * step, math.ceil (x_max / step) * step, step):
@@ -216,11 +232,8 @@ class Viewport(tk.Frame):
             self.canvas.create_line(x0, y0, x1, y1, arrow=tk.LAST, fill="red", width=2)
             self.canvas.create_text(x1, y1, text=f"{f.magnitude}N", fill="red", font=("Arial", 7), anchor="sw")
 
-    def _regenerate_mesh(self):
-        self.triangles = generate_triangular_mesh(self.nodes, self.mesh_scheme)
-
     def _draw_triangles(self): 
-        for tri in self.triangles:
+        for tri in self.subd_triangles:
             n1, n2, n3 = tri.Nodes
             p1 = self.world_to_screen(n1.x, n1.y)
             p2 = self.world_to_screen(n2.x, n2.y)
@@ -274,7 +287,7 @@ class Viewport(tk.Frame):
                     self.nodes.append(node)
                     self.forces.append(Force(node, magnitude=dlg.magnitude,angle=dlg.angle))
             
-            self._regenerate_mesh()
+            self._generate_mesh()
             self._redraw()
 
     # Remove closest node on double click
@@ -283,7 +296,7 @@ class Viewport(tk.Frame):
         self.nodes  = [n for n in self.nodes  if not (n.x == x and n.y == y)]
         self.forces = [f for f in self.forces if not (f.node.x == x and f.node.y == y)]
 
-        self._regenerate_mesh()
+        self._generate_mesh()
         self._redraw()
 
     # Mouse Hover Behaviour
@@ -366,15 +379,25 @@ class Viewport(tk.Frame):
     # ---------- PUBLIC API ----------
     ############################################################################
 
+    # Accessors
     def get_nodes(self):
         return list(self.nodes)
 
     def get_triangles(self):
-        return list(self.triangles)
+        return list(self.subd_triangles)
 
     def get_forces(self):
         return list(self.forces)
+    
+    # Modifiers
+    def set_subdivision_level(self, level: int):
+        self.subdivision_level = level
+        self._subdivide()
+        self._redraw()
 
     def clear(self):
         self.nodes.clear()
+        self.forces.clear()
+        self.base_triangles.clear()
+        self.subd_triangles.clear()
         self._redraw()

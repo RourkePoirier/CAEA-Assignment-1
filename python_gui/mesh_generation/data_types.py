@@ -29,10 +29,18 @@ class Node:
     x: float
     y: float
     type: NodeType
-    
+
+    def __init__(self, x, y, id):
+        self.x = x
+        self.y = y
+        self.id = id
+        
     def __hash__(self):
         return id(self)
-
+    
+    def __eq__(self, other):
+        return self.id == other.id
+    
 @dataclass
 class Line:
     start: Node
