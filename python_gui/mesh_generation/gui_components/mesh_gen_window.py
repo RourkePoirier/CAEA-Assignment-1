@@ -21,6 +21,8 @@ class MeshGenWindow(tk.Frame):
 
         self.combo = ttk.Combobox(self, width=25, state="readonly", values=list(MeshScheme), textvariable=self.mesh_method)
         self.combo.grid(row=1, column=1, columnspan=3, pady=10, sticky="ew")
+        
+
 
         #self.label = tk.Label(self, text=self.mesh_method.get(), font=("Arial", 10))
         #self.label.grid(row=0, column=4, columnspan=1, pady=(0, 10), sticky="w")
@@ -32,7 +34,9 @@ class MeshGenWindow(tk.Frame):
 
     def get_mesh_scheme(self):
         return self.combo.get()
-
+    
+    
+        
 
 
 if __name__ == "__main__":

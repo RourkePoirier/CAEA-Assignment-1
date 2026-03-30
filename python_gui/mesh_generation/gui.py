@@ -58,15 +58,26 @@ class GUIManager:
         mesh_panel.place(x=900, y=175)
 
         self.components["properties"] = properties
-# Buttons
+        
+        # Buttons
         clear_viewport_button = tk.Button(self.root, text="Clear viewport", command=self.clear_viewport)
         exp_button = tk.Button(self.root, text="Export to data_structure.xlsx", command=self.export_excel)
+        subdivide_up_button = tk.Button(text="Subdivide +", command=self.subd_up)
+        subdivide_down_button = tk.Button(text="Subdivide -", command=self.subd_down)
 
         # Place buttons #HARDCODED
+        subdivide_up_button.place   (x=1000, y=360)
+        subdivide_down_button.place (x=900, y=360)
         clear_viewport_button.place (x=900, y=400)
         exp_button.place            (x=900, y=440)
+        
 
     # ---------- BUSINESS LOGIC ----------
+    def subd_up(self):
+        self.components["plot"].subd_up()
+        
+    def subd_down(self):
+        self.components["plot"].subd_down()
 
     def clear_viewport(self):
         self.components["plot"].clear()

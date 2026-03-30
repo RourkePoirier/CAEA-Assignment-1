@@ -405,8 +405,24 @@ class Viewport(tk.Frame):
         return list(self.forces)
     
     # Modifiers
-    def set_subdivision_level(self, level: int):
-        self.subdivision_level = level
+    def subd_up(self):
+
+        # Clamp max subdivision levels at 5
+        if(self.subdivision_level <= 5): self.subdivision_level += 1
+
+        # Regenerate Mesh and Resubdivide
+        self._generate_mesh()
+        self._subdivide()
+        self._redraw()
+
+    def subd_down(self):
+        
+        # Clamp min subdivision levels at 0
+        if(self.subdivision_level >= 0): self.subdivision_level -= 1
+
+        # Regenerate Mesh and Resubdivide
+        self._generate_mesh()
+        self._subdivide()
         self._redraw()
 
     def clear(self):
