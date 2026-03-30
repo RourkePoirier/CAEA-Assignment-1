@@ -123,14 +123,11 @@ class Viewport(tk.Frame):
     # ---------- MESH GENERATION & SUBDIVISION FUNCTION CALLS ----------
     ############################################################################
 
-    # Handled Externally -> Returns list of Triangles
+    # Handled Externally
     def _generate_mesh(self):
         self.base_triangles = generate_triangular_mesh(self.nodes, self.mesh_scheme) 
-
-    # Handled Externally -> Returns list of Triangles
-    def _subdivide(self):
-        self.subd_triangles = subdivide_triangular_mesh(self.nodes, self.subdivision_level)
-
+        self.subd_triangles = self.base_triangles #subdivide_triangular_mesh()
+        
     ############################################################################
     # ---------- TRANSFORMS ----------
     ############################################################################
@@ -234,7 +231,7 @@ class Viewport(tk.Frame):
 
     def _draw_triangles(self): 
         for tri in self.subd_triangles:
-            n1, n2, n3 = tri.Nodes
+            n1, n2, n3 = tri.get_nodes(self.nodes)
             p1 = self.world_to_screen(n1.x, n1.y)
             p2 = self.world_to_screen(n2.x, n2.y)
             p3 = self.world_to_screen(n3.x, n3.y)
@@ -392,7 +389,6 @@ class Viewport(tk.Frame):
     # Modifiers
     def set_subdivision_level(self, level: int):
         self.subdivision_level = level
-        self._subdivide()
         self._redraw()
 
     def clear(self):

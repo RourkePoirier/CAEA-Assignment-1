@@ -20,10 +20,8 @@ def generate_triangular_mesh(nodes: List[Node], mesh_method: tk.StringVar) -> Li
     value = mesh_method.get()
     
     match mesh_method.get():
-        case MeshScheme.DELAUNAY.value:
-            return _delaunay(nodes)
-        case MeshScheme.NOTHING.value: 
-            return _nothing(nodes)
+        case MeshScheme.DELAUNAY.value: return _delaunay(nodes)
+        case MeshScheme.NOTHING.value: return _nothing(nodes)
         case _:
             #print(f"Unknown mesh scheme: {mesh_method.get()}, falling back to Delaunay")
             return _delaunay(nodes)
@@ -31,26 +29,24 @@ def generate_triangular_mesh(nodes: List[Node], mesh_method: tk.StringVar) -> Li
 # -- Algorithms --
 
 def _delaunay(nodes: List[Node]) -> List[Triangle]:
+    if len(nodes) < 3:
+        return []
 
-    if len(nodes) < 3: return []
-    
-    # Convert to numpy points
-    points = np.array([[node.x, node.y] for node in nodes])
-
+    # Convert nodes to numpy array
+    points = np.array([[n.x, n.y] for n in nodes])
     tri = Delaunay(points)
 
     triangles: List[Triangle] = []
 
     for simplex in tri.simplices:
-        n1 = nodes[simplex[0]]
-        n2 = nodes[simplex[1]]
-        n3 = nodes[simplex[2]]
+        i0, i1, i2 = simplex  # indices into nodes list
+        n0, n1, n2 = nodes[i0], nodes[i1], nodes[i2]
 
-        # Ensure consistent CCW orientation (important for FEA later)
-        if not _is_ccw(n1, n2, n3):
-            n2, n3 = n3, n2
-
-        triangles.append(Triangle(Nodes=(n1, n2, n3)))
+        # Ensure CCW orientation
+        if not _is_ccw(n0, n1, n2):
+            i1, i2 = i2, i1  # swap indices, not Node objects
+        
+        triangles.append(Triangle(node_ids=(i0, i1, i2)))
 
     return triangles
 

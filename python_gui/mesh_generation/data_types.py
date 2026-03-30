@@ -26,30 +26,26 @@ class MeshScheme(StrEnum):
 
 @dataclass
 class Node:
-    x: float
-    y: float
-    type: NodeType
-
-    def __init__(self, x, y, id):
+    def __init__(self, x: float, y: float, type: NodeType, node_id=None):
         self.x = x
         self.y = y
-        self.id = id
-        
+        self.type = type
+        self.id = node_id if node_id is not None else id(self)
+
     def __hash__(self):
-        return id(self)
-    
+        return hash(self.id)
+
     def __eq__(self, other):
-        return self.id == other.id
-    
-@dataclass
-class Line:
-    start: Node
-    end: Node
+        return isinstance(other, Node) and self.id == other.id
 
 @dataclass
 class Triangle:
-    Nodes: Tuple[Node, Node, Node]
 
+    # Instead of copying into array, store pointers to nodes
+    node_ids: Tuple[int, int, int]  
+
+    def get_nodes(self, nodes: list[Node]):
+        return [nodes[i] for i in self.node_ids]
 
 @dataclass
 class Force:
