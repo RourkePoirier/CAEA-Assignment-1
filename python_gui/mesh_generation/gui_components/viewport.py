@@ -41,12 +41,11 @@ class Viewport(tk.Frame):
         super().__init__(parent)
 
         # Data Parameters
-        self.nodes:             List[Node]     = []
-        self.base_triangles:    List[Triangle] = [] # Base triangle mesh before subdivision
+        self.placed_nodes:        List[Node]     = [] # Base nodes before subdivision (Physically placed)
+        self.subd_nodes:        List[Node]     = [] # Base nodes after subdivision (Generated based on subdivision_level)
+        self.mesh_triangles:    List[Triangle] = [] # Base triangle mesh before subdivision
         self.subd_triangles:    List[Triangle] = [] # Subdivide triangle mesh after subdivision
-        self.forces:            List[Force]    = []
-
-        self.edge_map = {}
+        self.forces:            List[Force]    = [] # Array to store forces
 
         # Mesh Generation and Subdivision
         self.mesh_scheme = mesh_method
@@ -125,8 +124,10 @@ class Viewport(tk.Frame):
 
     # Handled Externally
     def _generate_mesh(self):
-        self.base_triangles = generate_triangular_mesh(self.nodes, self.mesh_scheme) 
-        self.subd_triangles = self.base_triangles #subdivide_triangular_mesh()
+        self.mesh_triangles = generate_triangular_mesh(self.placed_nodes, self.mesh_scheme)
+    
+    def _subdivide(self):
+        self.subd_nodes, self.subd_triangles = subdivide_triangular_mesh(self.placed_nodes, self.mesh_triangles, self.subdivision_level)
         
     ############################################################################
     # ---------- TRANSFORMS ----------
@@ -211,7 +212,7 @@ class Viewport(tk.Frame):
 
         r = NODE_RADIUS_PX
 
-        for node in self.nodes:
+        for node in self.placed_nodes:
             px, py = self.world_to_screen(node.x, node.y)
 
             match(node.type):
@@ -229,9 +230,11 @@ class Viewport(tk.Frame):
             self.canvas.create_line(x0, y0, x1, y1, arrow=tk.LAST, fill="red", width=2)
             self.canvas.create_text(x1, y1, text=f"{f.magnitude}N", fill="red", font=("Arial", 7), anchor="sw")
 
-    def _draw_triangles(self): 
+    def _draw_triangles(self):
+
+        # Subdivision triangles
         for tri in self.subd_triangles:
-            n1, n2, n3 = tri.get_nodes(self.nodes)
+            n1, n2, n3 = tri.get_nodes(self.subd_nodes)
             p1 = self.world_to_screen(n1.x, n1.y)
             p2 = self.world_to_screen(n2.x, n2.y)
             p3 = self.world_to_screen(n3.x, n3.y)
@@ -239,6 +242,19 @@ class Viewport(tk.Frame):
             self.canvas.create_line(*p1, *p2, fill="blue")
             self.canvas.create_line(*p2, *p3, fill="blue")
             self.canvas.create_line(*p3, *p1, fill="blue")
+
+        # Mesh triangles
+        for tri in self.mesh_triangles:
+            n1, n2, n3 = tri.get_nodes(self.placed_nodes)
+            p1 = self.world_to_screen(n1.x, n1.y)
+            p2 = self.world_to_screen(n2.x, n2.y)
+            p3 = self.world_to_screen(n3.x, n3.y)
+
+            self.canvas.create_line(*p1, *p2, fill="blue", width=3)
+            self.canvas.create_line(*p2, *p3, fill="blue", width=3)
+            self.canvas.create_line(*p3, *p1, fill="blue", width=3)
+
+
 
     def _draw_tooltip(self, px, py, node):
         self.canvas.delete("tooltip")
@@ -271,29 +287,31 @@ class Viewport(tk.Frame):
         if not self._node_exists_at(x, y):
             match self.tool:
                 case Tool.NODE:
-                    self.nodes.append(Node(x, y, NodeType.NORMAL))
+                    self.placed_nodes.append(Node(x, y, NodeType.NORMAL))
 
                 case Tool.FIXED_NODE:
-                    self.nodes.append(Node(x, y, NodeType.FIXED))
+                    self.placed_nodes.append(Node(x, y, NodeType.FIXED))
 
                 case Tool.FORCE:
                     dlg = ForceDialog(self, "Define Force")
                     if dlg.magnitude is None or dlg.angle is None: return
 
                     node = Node(x, y, NodeType.FORCE)
-                    self.nodes.append(node)
+                    self.placed_nodes.append(node)
                     self.forces.append(Force(node, magnitude=dlg.magnitude,angle=dlg.angle))
             
             self._generate_mesh()
+            self._subdivide()
             self._redraw()
 
     # Remove closest node on double click
     def _on_double_left_click(self, event):
         x, y = self.snap(event.x, event.y)
-        self.nodes  = [n for n in self.nodes  if not (n.x == x and n.y == y)]
+        self.placed_nodes  = [n for n in self.placed_nodes  if not (n.x == x and n.y == y)]
         self.forces = [f for f in self.forces if not (f.node.x == x and f.node.y == y)]
 
         self._generate_mesh()
+        self._subdivide()
         self._redraw()
 
     # Mouse Hover Behaviour
@@ -361,7 +379,7 @@ class Viewport(tk.Frame):
     def _find_nearest_node(self, px, py):
         radius_px = NODE_RADIUS_PX + 4
 
-        for node in self.nodes:
+        for node in self.placed_nodes:
             npx, npy = self.world_to_screen(node.x, node.y)
             dx = npx - px
             dy = npy - py
@@ -370,7 +388,7 @@ class Viewport(tk.Frame):
         return None
 
     def _node_exists_at(self, x, y) -> bool:
-        return any(n.x == x and n.y == y for n in self.nodes)
+        return any(n.x == x and n.y == y for n in self.placed_nodes)
 
     ############################################################################
     # ---------- PUBLIC API ----------
@@ -378,8 +396,8 @@ class Viewport(tk.Frame):
 
     # Accessors
     def get_nodes(self):
-        return list(self.nodes)
-
+        return list(self.subd_nodes)
+    
     def get_triangles(self):
         return list(self.subd_triangles)
 
@@ -392,8 +410,8 @@ class Viewport(tk.Frame):
         self._redraw()
 
     def clear(self):
-        self.nodes.clear()
+        self.placed_nodes.clear()
         self.forces.clear()
-        self.base_triangles.clear()
+        self.mesh_triangles.clear()
         self.subd_triangles.clear()
         self._redraw()

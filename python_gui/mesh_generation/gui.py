@@ -44,7 +44,7 @@ class GUIManager:
         #mesh_method.trace_add("write", lambda *_: print(mesh_method.get()))
 
         # Viewport
-        plot = Viewport(self.root, mesh_method=mesh_method, width=800, height=600)
+        plot = Viewport(self.root, mesh_method=mesh_method, subdivision_level=2, width=800, height=600)
         plot.place(x=50, y=50)
         self.components["plot"] = plot
 
@@ -110,11 +110,12 @@ class GUIManager:
             # Map Node objects to 1-based indices
             node_index_map = {node: i+1 for i, node in enumerate(nodes)}
 
-            for tri in triangles:   
-                ncon1.append(node_index_map[tri.Nodes[0]])
-                ncon2.append(node_index_map[tri.Nodes[1]])
-                ncon3.append(node_index_map[tri.Nodes[2]])
-
+            for tri in triangles:
+                n1, n2, n3 = tri.get_nodes(nodes)
+                ncon1.append(node_index_map[n1])
+                ncon2.append(node_index_map[n2])
+                ncon3.append(node_index_map[n3])
+                
             # For each force, calculate x and y component (to 4dp) and append to output array
             for force in forces:
                 angle_rad = math.radians(force.angle)

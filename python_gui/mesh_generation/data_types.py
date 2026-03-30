@@ -41,7 +41,7 @@ class Node:
 @dataclass
 class Triangle:
 
-    # Instead of copying into array, store pointers to nodes
+    # Instead of copying into array, store pointers to nodes - more efficient
     node_ids: Tuple[int, int, int]  
 
     def get_nodes(self, nodes: list[Node]):
