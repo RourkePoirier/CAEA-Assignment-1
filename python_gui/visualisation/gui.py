@@ -7,7 +7,7 @@ import numpy as np
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
-
+import matplotlib.pyplot as plt
 
 ##########################################################################################
 
@@ -17,46 +17,62 @@ class GUIManager:
         self.root.title("Data Visualisation")
         self.root.geometry("1200x800")
         self.root.bind("<Escape>", lambda e: self.root.attributes("-fullscreen", False))
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)  # handle close button
 
-        # - Read data_structure -
+        # Read data
+        data = pd.read_excel('data_structure.xlsx', header=None, skiprows=1).values
+        U_data = pd.read_excel('displacement.xlsx', header=None).values.flatten()
 
-        # Prob should not make this hard coded
-        data_structure = pd.read_excel('data_structure.xlsx')
+        # Parse structure parameters (matching MATLAB hardcoded positions)
+        n_element = int(data[0, 0])
+        n_nodes   = int(data[0, 1])
 
-        n_element=data_structure["n_element"][0]
-        n_nodes=data_structure["n_nodes"][0]
-        ncon1=data_structure["ncon1"].dropna().to_numpy()
-        ncon2=data_structure["ncon2"].dropna().to_numpy()
-        ncon3=data_structure["ncon3"].dropna().to_numpy()
-        X=data_structure["X"].dropna().to_numpy()
-        Y=data_structure["Y"].dropna().to_numpy()
-        E=data_structure["E"][0]
-        A=data_structure["A"][0]
-        F=data_structure["F"].dropna().to_numpy()
-        NDU=data_structure["NDU"][0]
-        dzero=data_structure["dzero"].dropna().to_numpy()
-        v=data_structure["v"][0]
-        t=data_structure["t"][0]
-        
+        ncon = data[:, 2:5].astype(int)  # Node connectivity (1-indexed)
+        X    = data[:, 5]
+        Y    = data[:, 6]
+        U    = U_data
+
+        fig, ax = plt.subplots()
+
+        scale = 1000
+
+        for i in range(n_element):
+            n1, n2, n3 = ncon[i] - 1  # Convert to 0-indexed
+
+            # Original coordinates
+            x_orig = [X[n1], X[n2], X[n3], X[n1]]
+            y_orig = [Y[n1], Y[n2], Y[n3], Y[n1]]
+
+            # Displacements (interleaved: u1,v1,u2,v2,...)
+            u1, v1 = U[2*n1],   U[2*n1+1]
+            u2, v2 = U[2*n2],   U[2*n2+1]
+            u3, v3 = U[2*n3],   U[2*n3+1]
+
+            # Deformed coordinates
+            x_def = [X[n1] + scale*u1, X[n2] + scale*u2, X[n3] + scale*u3, X[n1] + scale*u1]
+            y_def = [Y[n1] + scale*v1, Y[n2] + scale*v2, Y[n3] + scale*v3, Y[n1] + scale*v1]
+
+            # Plot original (blue) and deformed (red)
+            ax.plot(x_orig, y_orig, color='blue',  linewidth=1,   label='Original'  if i == 0 else "")
+            ax.plot(x_def,  y_def,  color='red',   linewidth=2,   label='Deformed'  if i == 0 else "")
+
+        ax.set_aspect('equal')
+        ax.legend()
+        ax.set_title('FEA Structure: Original vs Deformed')
+        ax.axis('off')
 
         # The following is the post_processing matlab function
         # TODO 
 
-        # - matplot -
-        figure = Figure(figsize=(5, 4), dpi=100)
-
-        ax = figure.add_subplot(111)
-        t = np.arange(0, 3, .01)
-        ax.plot(t, 2 * np.sin(2 * np.pi * t))
-
         # - Draw matplot in tkinter -
-        canvas = FigureCanvasTkAgg(figure, master=self.root)
+        canvas = FigureCanvasTkAgg(fig, master=self.root)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-
-    # ---------- LAYOUT ----------
-    def build_layout(self):
-        return []
+    
+    def on_close(self):
+        plt.close('all')
+        self.root.quit()
+        self.root.destroy()
 
 # ---------- RUN ----------
     def run(self):

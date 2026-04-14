@@ -20,7 +20,6 @@ from gui_components.viewport import Viewport
 from gui_components.properties_window import PropertiesWindow
 from gui_components.mesh_gen_window import MeshGenWindow
 from data_types import ExcelOutputFormat, NodeType, MeshScheme
-from pre_processing import PreProcessing
 
 ##########################################################################################
 
@@ -86,13 +85,6 @@ class GUIManager:
     def export_excel(self):
         output = self.construct_output()
         self.write_data_structure_to_excel(output, filename='data_structure.xlsx')  
-
-        pp = PreProcessing(output)
-
-        self.write_to_excel(pp.get_U(),     'U',    'displacement.xlsx')
-        self.write_to_excel(pp.get_Sx(),    'Sx',   'stress_x.xlsx')
-        self.write_to_excel(pp.get_Sy(),    'Sy',   'stress_y.xlsx')
-        self.write_to_excel(pp.get_Sxy(),   'Sxy',  'stress_xy.xlsx')
 
     def construct_output(self):
 
