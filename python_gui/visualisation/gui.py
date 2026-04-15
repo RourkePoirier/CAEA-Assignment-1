@@ -3,6 +3,7 @@
 # Imports
 import pandas as pd
 import tkinter as tk
+from tkinter import ttk
 import numpy as np
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
@@ -20,24 +21,53 @@ class GUIManager:
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)  # handle close button
 
         # Read data
-        data = pd.read_excel('data_structure.xlsx', header=None, skiprows=1).values
-        U_data = pd.read_excel('displacement.xlsx', header=None).values.flatten()
+        data   = pd.read_excel('data_structure.xlsx', header=None, skiprows=1).values
+        U      = pd.read_excel('displacement.xlsx',   header=None).values.flatten()
+        Sx     = pd.read_excel('stress_x.xlsx',       header=None).values.flatten()
+        Sy     = pd.read_excel('stress_y.xlsx',       header=None).values.flatten()
+        Sxy    = pd.read_excel('stress_xy.xlsx',      header=None).values.flatten()
 
         # Parse structure parameters (matching MATLAB hardcoded positions)
         n_element = int(data[0, 0])
         n_nodes   = int(data[0, 1])
 
-        ncon = data[:, 2:5].astype(int)  # Node connectivity (1-indexed)
-        X    = data[:, 5]
-        Y    = data[:, 6]
-        U    = U_data
+        # Only take first n_element rows for connectivity
+        ncon = data[:n_element, 2:5].astype(int) - 1  # 0-indexed
 
-        fig, ax = plt.subplots()
+        # Only take rows with valid X/Y data (first n_nodes rows that aren't NaN)
+        xy = data[:, 5:7]
+        valid = ~np.isnan(xy[:, 0])
+        X = xy[valid, 0]
+        Y = xy[valid, 1]
 
-        scale = 1000
+        # Trim to exactly n_nodes
+        X = X[:n_nodes]
+        Y = Y[:n_nodes]
+
+        # Von Mises stress
+        VM = np.sqrt(Sx**2 - Sx*Sy + Sy**2 + 3*Sxy**2)
+
+        # Notebook with two tabs
+        notebook = ttk.Notebook(self.root)
+        notebook.pack(fill=tk.BOTH, expand=1)
+
+        #
+        #   Page 1 - Displacement
+        #
+
+        tab1 = ttk.Frame(notebook)
+        tab2 = ttk.Frame(notebook)
+        notebook.add(tab1, text='Deformation')
+        notebook.add(tab2, text='Von Mises Stress')
+
+        fig1 = Figure()
+        ax1  = fig1.add_subplot(111)
+
+        mesh_size = max(X.max() - X.min(), Y.max() - Y.min())
+        scale = 0.1 * mesh_size / np.max(np.abs(U))
 
         for i in range(n_element):
-            n1, n2, n3 = ncon[i] - 1  # Convert to 0-indexed
+            n1, n2, n3 = ncon[i]
 
             # Original coordinates
             x_orig = [X[n1], X[n2], X[n3], X[n1]]
@@ -53,22 +83,55 @@ class GUIManager:
             y_def = [Y[n1] + scale*v1, Y[n2] + scale*v2, Y[n3] + scale*v3, Y[n1] + scale*v1]
 
             # Plot original (blue) and deformed (red)
-            ax.plot(x_orig, y_orig, color='blue',  linewidth=1,   label='Original'  if i == 0 else "")
-            ax.plot(x_def,  y_def,  color='red',   linewidth=2,   label='Deformed'  if i == 0 else "")
+            ax1.plot(x_orig, y_orig, color='blue',  linewidth=1,   label='Original'  if i == 0 else "")
+            ax1.plot(x_def,  y_def,  color='red',   linewidth=2,   label='Deformed'  if i == 0 else "")
 
-        ax.set_aspect('equal')
-        ax.legend()
-        ax.set_title('FEA Structure: Original vs Deformed')
-        ax.axis('off')
+        ax1.set_aspect('equal')
+        ax1.legend()
+        ax1.set_title('FEA Structure: Original vs Deformed')
+        ax1.axis('off')
 
-        # The following is the post_processing matlab function
-        # TODO 
+        canvas1 = FigureCanvasTkAgg(fig1, master=tab1)
+        canvas1.draw()
+        canvas1.get_tk_widget().pack(fill=tk.BOTH, expand=1)
 
-        # - Draw matplot in tkinter -
-        canvas = FigureCanvasTkAgg(fig, master=self.root)
-        canvas.draw()
-        canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-    
+        #
+        #   Page 2 - Stress
+        #
+
+        fig2 = Figure()
+        ax2  = fig2.add_subplot(111)
+
+        # tripcolor needs node-based values, so average element stresses to nodes
+        node_stress     = np.zeros(len(X))
+        node_stress_count = np.zeros(len(X))
+
+        for i in range(n_element):
+            n1, n2, n3 = ncon[i]
+            node_stress[n1] += VM[i]
+            node_stress[n2] += VM[i]
+            node_stress[n3] += VM[i]
+            node_stress_count[n1] += 1
+            node_stress_count[n2] += 1
+            node_stress_count[n3] += 1
+
+        node_stress /= node_stress_count
+
+        # Build triangle array for tripcolor
+        triangles = ncon[:n_element]  # shape (n_element, 3)
+
+        plot = ax2.tripcolor(X, Y, triangles, node_stress, cmap='jet', shading='gouraud')
+        ax2.triplot(X, Y, triangles, color='k', linewidth=0.3, alpha=0.3)  # optional mesh overlay
+
+        fig2.colorbar(plot, ax=ax2, label='Von Mises Stress (Pa)')
+        ax2.set_aspect('equal')
+        ax2.set_title('Von Mises Stress')
+        ax2.axis('off')
+
+        canvas2 = FigureCanvasTkAgg(fig2, master=tab2)
+        canvas2.draw()
+        canvas2.get_tk_widget().pack(fill=tk.BOTH, expand=1)
+
     def on_close(self):
         plt.close('all')
         self.root.quit()

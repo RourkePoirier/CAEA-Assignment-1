@@ -1,4 +1,3 @@
-
 from gui import GUIManager
 
 def main():
