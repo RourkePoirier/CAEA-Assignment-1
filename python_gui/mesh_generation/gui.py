@@ -53,7 +53,7 @@ class GUIManager:
         self.components["properties"] = properties
 
         # Side panel
-        mesh_panel = MeshGenWindow(self.root, mesh_method=mesh_method, on_change=plot._redraw, width=250, height=600)
+        mesh_panel = MeshGenWindow(self.root, mesh_method=mesh_method, on_change=plot.regenerate, width=250, height=600)
         mesh_panel.place(x=900, y=175)
 
         self.components["properties"] = properties

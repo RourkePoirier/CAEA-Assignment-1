@@ -127,6 +127,10 @@ class Viewport(tk.Frame):
         self.mesh_triangles = generate_triangular_mesh(self.placed_nodes, self.mesh_scheme)
     
     def _subdivide(self):
+        if not self.mesh_triangles:
+            self.subd_nodes = list(self.placed_nodes)
+            self.subd_triangles = []
+            return
         self.subd_nodes, self.subd_triangles = subdivide_triangular_mesh(self.placed_nodes, self.mesh_triangles, self.subdivision_level)
         
     ############################################################################
@@ -393,6 +397,11 @@ class Viewport(tk.Frame):
     ############################################################################
     # ---------- PUBLIC API ----------
     ############################################################################
+
+    def regenerate(self):
+        self._generate_mesh()
+        self._subdivide()
+        self._redraw()
 
     # Accessors
     def get_nodes(self):

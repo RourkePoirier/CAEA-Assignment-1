@@ -19,7 +19,14 @@ class MeshGenWindow(tk.Frame):
         # Mesh Generation Combo Box
         #########################################
 
-        self.combo = ttk.Combobox(self, width=25, state="readonly", values=list(MeshScheme), textvariable=self.mesh_method)
+        self.combo = ttk.Combobox(self, 
+                                  width=25, 
+                                  state="readonly", 
+                                  values=[s.value for s in MeshScheme], 
+                                  textvariable=self.mesh_method
+                                  )
+        self.combo.current(0)
+
         self.combo.grid(row=1, column=1, columnspan=3, pady=10, sticky="ew")
         
 

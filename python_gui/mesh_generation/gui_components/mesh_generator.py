@@ -23,11 +23,10 @@ def generate_triangular_mesh(nodes: List[Node], mesh_method: tk.StringVar) -> Li
         case MeshScheme.DELAUNAY.value: return _delaunay(nodes)
         case MeshScheme.NOTHING.value: return _nothing(nodes)
         case _:
-            #print(f"Unknown mesh scheme: {mesh_method.get()}, falling back to Delaunay")
+            print(f"Unknown mesh scheme: {mesh_method.get()}, falling back to Delaunay")
             return _delaunay(nodes)
 
 # -- Algorithms --
-
 def _delaunay(nodes: List[Node]) -> List[Triangle]:
     if len(nodes) < 3:
         return []
@@ -51,7 +50,6 @@ def _delaunay(nodes: List[Node]) -> List[Triangle]:
     return triangles
 
 def _nothing(nodes: List[Node]) -> List[Triangle]:
-    print("AAAAAAAA")
     return []
 
 # -- Helper Methods --
