@@ -19,8 +19,10 @@ class NodeType(Enum):
 # Different types of mesh generation schemes
 @dataclass
 class MeshScheme(StrEnum):
-    DELAUNAY = "Delauny" 
-    NOTHING = "Nothing"
+    DELAUNAY        = "Delauny"         # Delaunay triangulation (scipy)
+    RADIAL          = "Radial"          # Fan from centroid to convex hull
+    ADVANCING_FRONT = "Advancing Front" # Advancing front from boundary inward
+    NOTHING         = "Nothing"
 
 # -- Classes --
 

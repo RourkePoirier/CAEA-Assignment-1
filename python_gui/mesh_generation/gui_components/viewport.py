@@ -124,14 +124,22 @@ class Viewport(tk.Frame):
 
     # Handled Externally
     def _generate_mesh(self):
-        self.mesh_triangles = generate_triangular_mesh(self.placed_nodes, self.mesh_scheme)
-    
+        result = generate_triangular_mesh(self.placed_nodes, self.mesh_scheme)
+        
+        if isinstance(result, tuple):
+            # Scheme generated its own nodes (Grid, Advancing Front)
+            self.mesh_nodes, self.mesh_triangles = result
+        else:
+            # Scheme uses placed nodes directly (Delaunay, Radial)
+            self.mesh_nodes = self.placed_nodes
+            self.mesh_triangles = result
+
     def _subdivide(self):
         if not self.mesh_triangles:
-            self.subd_nodes = list(self.placed_nodes)
+            self.subd_nodes = list(self.mesh_nodes)
             self.subd_triangles = []
             return
-        self.subd_nodes, self.subd_triangles = subdivide_triangular_mesh(self.placed_nodes, self.mesh_triangles, self.subdivision_level)
+        self.subd_nodes, self.subd_triangles = subdivide_triangular_mesh(self.mesh_nodes, self.mesh_triangles, self.subdivision_level)
         
     ############################################################################
     # ---------- TRANSFORMS ----------
@@ -249,7 +257,7 @@ class Viewport(tk.Frame):
 
         # Mesh triangles
         for tri in self.mesh_triangles:
-            n1, n2, n3 = tri.get_nodes(self.placed_nodes)
+            n1, n2, n3 = tri.get_nodes(self.mesh_nodes)
             p1 = self.world_to_screen(n1.x, n1.y)
             p2 = self.world_to_screen(n2.x, n2.y)
             p3 = self.world_to_screen(n3.x, n3.y)
