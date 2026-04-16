@@ -109,14 +109,15 @@ class GUIManager:
             A = 0                               # Area is handled in MATLAB -> here for poserity
 
 
-            # Map Node objects to 1-based indices
-            node_index_map = {node: i+1 for i, node in enumerate(nodes)}
+            # Map Node objects to 1-based indices by position (x, y)
+            # This handles node identity issues when mesh is regenerated/subdivided
+            node_index_map = {(node.x, node.y): i+1 for i, node in enumerate(nodes)}
 
             for tri in triangles:
                 n1, n2, n3 = tri.get_nodes(nodes)
-                ncon1.append(node_index_map[n1])
-                ncon2.append(node_index_map[n2])
-                ncon3.append(node_index_map[n3])
+                ncon1.append(node_index_map[(n1.x, n1.y)])
+                ncon2.append(node_index_map[(n2.x, n2.y)])
+                ncon3.append(node_index_map[(n3.x, n3.y)])
                 
             # For each force, calculate x and y component (to 4dp) and append to output array
             for force in forces:
@@ -124,9 +125,12 @@ class GUIManager:
                 force_x = round(force.magnitude * math.cos(angle_rad), 4)
                 force_y = round(force.magnitude * math.sin(angle_rad), 4)
 
-                node_idx = node_index_map[force.node] - 1  # 0-based
-                F[2*node_idx]   += force_x
-                F[2*node_idx+1] += force_y
+                # Resolve force to node by position (x, y) instead of ID
+                node_pos = (force.node.x, force.node.y)
+                if node_pos in node_index_map:
+                    node_idx = node_index_map[node_pos] - 1  # 0-based
+                    F[2*node_idx]   += force_x
+                    F[2*node_idx+1] += force_y
 
             dzero = []
             for i, node in enumerate(nodes):
