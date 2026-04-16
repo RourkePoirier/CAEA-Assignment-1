@@ -14,7 +14,6 @@
 import tkinter as tk
 import pandas as pd
 import math
-from itertools import zip_longest
 
 from gui_components.viewport import Viewport
 from gui_components.properties_window import PropertiesWindow
