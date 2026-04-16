@@ -21,11 +21,16 @@ class GUIManager:
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)  # handle close button
 
         # Read data
-        data   = pd.read_excel('data_structure.xlsx', header=None, skiprows=1).values
-        U      = pd.read_excel('displacement.xlsx',   header=None).values.flatten()
-        Sx     = pd.read_excel('stress_x.xlsx',       header=None).values.flatten()
-        Sy     = pd.read_excel('stress_y.xlsx',       header=None).values.flatten()
-        Sxy    = pd.read_excel('stress_xy.xlsx',      header=None).values.flatten()
+        try:
+            data   = pd.read_excel('data_structure.xlsx', header=None, skiprows=1).values
+            U      = pd.read_excel('displacement.xlsx',   header=None).values.flatten()
+            Sx     = pd.read_excel('stress_x.xlsx',       header=None).values.flatten()
+            Sy     = pd.read_excel('stress_y.xlsx',       header=None).values.flatten()
+            Sxy    = pd.read_excel('stress_xy.xlsx',      header=None).values.flatten()
+        except Exception as e:
+            tk.messagebox.showerror("Error", f"Failed to read Excel files: {e}")
+            self.root.destroy()
+            return
 
         # Parse structure parameters (matching MATLAB hardcoded positions)
         n_element = int(data[0, 0])
