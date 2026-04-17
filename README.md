@@ -5,10 +5,10 @@
 Modified from code provided by Sarat in lectures
 
 Python and MATLAB Development by
-Matthew Smith 22173112
-Steve Millar 21131046
-Rourke Poirer 22171432
-Jackson Long 19084617
+- Matthew Smith 22173112
+- Steve Millar 21131046
+- Rourke Poirer 22171432
+- Jackson Long 19084617
 
 ## Overview
 
