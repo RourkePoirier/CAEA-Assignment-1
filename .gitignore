@@ -3,7 +3,6 @@
 **/stress_xy.xlsx
 **/displacement.xlsx
 **/build
-**/dist
 **/__pycache__
 .vscode/extensions.json
 .vscode/launch.json

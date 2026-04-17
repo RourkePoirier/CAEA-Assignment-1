@@ -142,7 +142,7 @@ function out = generate_cutting_tool_data()
     end
 
     excel_path = fullfile(project_folder, 'data_structure.xlsx');
-    writecell(data, excel_path);
+    writecell(data, excel_path, "WriteMode","replacefile");
 
     %% Save preview plot
     fig = figure('Visible', 'off');
