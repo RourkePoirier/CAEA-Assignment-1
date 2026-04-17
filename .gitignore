@@ -4,5 +4,4 @@
 **/displacement.xlsx
 **/build
 **/__pycache__
-.vscode/extensions.json
-.vscode/launch.json
+**/.vscode
