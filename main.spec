@@ -2,11 +2,11 @@
 
 
 a = Analysis(
-    ['python_gui\\mesh_generation\\main.py'],
+    ['python_gui\\visualisation\\main.py'],
     pathex=[],
     binaries=[],
     datas=[],
-    hiddenimports=['pandas'],
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

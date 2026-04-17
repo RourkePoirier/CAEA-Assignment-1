@@ -88,13 +88,9 @@ The Python GUIs depend on the following libraries:
 
 ### Installation
 
-Install Python dependencies with pip:
+Run start_program.mlapp in MATLAB
 
-```powershell
-python -m pip install pandas numpy matplotlib scipy
-```
-
-On Windows, `tkinter` is normally included with Python. If not, install the appropriate Python distribution that includes it.
+Press each button to launch the corrosponding stage of the program
 
 ## Notes
 
