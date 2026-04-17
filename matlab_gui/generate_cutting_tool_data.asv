@@ -1,0 +1,95 @@
+function out = generate_cutting_tool_data();
+
+%Units:
+% Geometry : mm
+% E : MPa (N/mm^2)
+% Force : N
+% Thickness : mm
+
+    project_folder = fileparts(mfilename('fullpath'));
+
+    %Default settings
+    p.mesh_size_mm = 0.6;
+    p.E_MPa = 210000;
+    p.v = 0.30;
+    p.thickness_mm = 1.0;
+
+    p.cutting_force_N = 1000;
+    p.thrust_force_N = -500;
+    p.load_radius_mm = 0.75;
+
+    p.clamp_length_mm = 1.5;
+
+    % Build Default Cutting Tool
+    polygon_xy = build_tool_polygon();
+
+    % Generate Interior Points for Meshing
+    interior_points = generate_interior_points(polygon_xy, p.mesh_size_mm);
+    all_points = [polygon_xy; interior_points];
+    all_points = unique(round(all_points, 9), 'rows', 'stable');
+
+    % Triangulate and Keep Elements Inside Tool
+    DT = delaunayTriangulation(all_points);
+    tri = DT.ConnectivityList;
+    pts = DT.Points;
+
+    centroids = (pts(tri(:,1),:) + pts(tri(:,2),:) + pts(tri(:,3),:))/3;
+    in = inpolygon(centroids(:,1), centroids(:,2), polygon_xy(:,1), polygon_xy(:,2));
+    tri = tri(in, :);
+
+    for i = 1:size(tri,1)
+        coords = pts(tri(i,:), :);
+        if signed_triangle_area(coords) < 0
+            tri(i,[2 3]) = tri(i,[3 2]);
+        end
+    end
+
+    % Basic FEA Arrays
+    n_element = size(tri, 1);
+    n_nodes = size(pts, 1);
+
+    ncon = tri;
+    X = pts(:,1);
+    Y = pts(:,2);
+
+    E = p.E_MPa;
+    v = p.v;
+    t = p.thickness_mm;
+    A = polyarea(polygon_xy(:,1), polygon_xy(:,2));
+
+    % Default Boundary Conditions (Right end clamped)
+    xmax = max(X);
+    fixed_node_ids = find(X >= (xmax-p.clamp_length_mm));
+
+    dzero = zeros(2*numel(fixed_node_ids), 1);
+    idx = 1;
+    for k = 1:numel(fixed_node_ids)
+        node_id = fixed_node_ids(k);
+        dzero(idx) = 2*node_id -1;
+        dzero(idx+1) = 2*node_id;
+        idx = idx + 2;
+    end
+    NDU = length(dzero);
+
+    % Default Load Vector - Apply Near Tool Tip
+    F = zeros(2*n_nodes, 1);
+
+    tip_target = [0, 0];
+    distances = hypot(X - tip_target(1), Y - tip_target(2));
+    load_node_ids = find(distances <= p.load_radius_mm);
+
+    if isempty(load_node_ids)
+        [~, nearest_id] = min(distances);
+        load_node_ids = nearest_id;
+    end
+
+    fx_each = p.cutting_force_N / numel(load_node_ids);
+    fy_each = p.thrust_force_N / numel(load_node_ids);
+
+    for k = 1:numel(load_node_ids)
+        node_id = load_node_ids(k);
+        F(2*node_id - 1) = F(2*node_id -1) + fx_each;
+        F(2*node_id) = F(2*node_id) + fy_each;
+    end
+
+    % Export to Excel

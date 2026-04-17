@@ -1,0 +1,39 @@
+clear;
+clc;
+
+% Run this file instead of Main.m directly, it generates the cutting tool
+% input file first, then runs Main.m
+
+params = struct();
+
+%%Geometry Inputs
+
+params.tool_length_mm = 12.0;
+params.tool_height_mm = 4.0;
+params.rake_angle_deg = 12.0;
+params.clearance_angle_deg = 8.0;
+params.rake_face_length_mm = 2.0;
+params.clearance_face_length_mm = 2.5;
+
+%%Mesh
+params.mesh_size_mm = 0.6;
+
+%%Material
+params.E_MPa = 210000;
+params.v = 0.30;
+params.thickness_mm = 1.0;
+
+%%Loads
+params.cutting_force_N = 1000;
+params.thrust_force_N = -500;
+params.load_radius_mm = 0.75;
+
+%%Clamp
+params.clamp_length_mm = 1.5;
+
+%Generate input file
+out = generate_cutting_tool_data(params);
+
+%Run existing MATLAB solver
+project_folder = fileparts(mfilename('fullpath'));
+run(fullfile)
